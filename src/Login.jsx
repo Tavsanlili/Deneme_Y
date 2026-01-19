@@ -8,7 +8,7 @@ export default function Login() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isSignUp, setIsSignUp] = useState(false);
   
-  // ✨ YENİ: Rol Seçimi (Varsayılan: Öğrenci)
+  // Varsayılan rol
   const [role, setRole] = useState('student');
 
   const handleAuth = async (e) => {
@@ -25,43 +25,32 @@ export default function Login() {
 
     try {
       if (isSignUp) {
-        // --- KAYIT OLMA ---
+        // --- KAYIT OLMA (DÜZELTİLDİ) ---
         
-        // 1. Supabase Auth Kaydı
+        // 1. Supabase Auth Kaydı + Metadata (Rol) Ekleme
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: window.location.origin,
+            // ✨ KRİTİK NOKTA: Rol bilgisini buraya ekliyoruz
+            data: {
+              role: role, // 'student' veya 'teacher'
+              full_name: email.split('@')[0], // Opsiyonel: Mailin başını isim yap
+            }
           }
         });
         
         if (error) throw error;
 
-        // ✨ 2. Profil Tablosuna Rol Kaydı (YENİ KISIM)
-        if (data.user) {
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .insert([
-                { 
-                  id: data.user.id, 
-                  email: email,
-                  role: role // Seçilen rol (student veya teacher)
-                }
-              ]);
-            
-            if (profileError) throw profileError;
-        }
+        // NOT: Burada artık manuel olarak 'profiles' tablosuna insert yapmıyoruz.
+        // Çünkü SQL tarafında yazdığımız Trigger bunu otomatik hallediyor.
 
-        // Kayıt sonrası otomatik giriş yapılmasını engelle (Güvenlik/Onay akışı için)
+        // Kayıt sonrası otomatik giriş yapılmasını engelle (İsteğe bağlı)
         await supabase.auth.signOut();
 
-        // JavaScript alert ile bildirim
-        alert('🎉 Kayıt başarılı! Artık giriş yapabilirsiniz.');
-
-        // Başarılı kayıt mesajı
         setMessage({ 
-          text: '🎉 Kayıt başarılı! Şimdi giriş yapabilirsiniz.', 
+          text: '🎉 Kayıt başarılı! Lütfen e-postanızı onaylayın ve giriş yapın.', 
           type: 'success' 
         });
         
@@ -83,12 +72,10 @@ export default function Login() {
         if (error) throw error;
         
         setMessage({ text: '✅ Giriş başarılı! Yönlendiriliyorsunuz...', type: 'success' });
-        // App.jsx otomatik olarak session'ı algılayıp yönlendirecek
       }
     } catch (error) {
       let errorMessage = error.message;
       
-      // Türkçe hata mesajları çevirisi
       if (errorMessage.includes('Invalid login credentials')) {
         errorMessage = 'E-posta veya şifre hatalı!';
       } else if (errorMessage.includes('Email not confirmed')) {
@@ -126,7 +113,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 relative overflow-hidden">
       
-      {/* Arka plan animasyonlu daireler */}
+      {/* Arka plan efektleri */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -134,7 +121,6 @@ export default function Login() {
 
       <div className="relative bg-slate-800/80 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-2xl border border-slate-700/50 w-full max-w-md">
         
-        {/* Logo/Icon */}
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
             <span className="text-3xl">📚</span>
@@ -152,7 +138,7 @@ export default function Login() {
 
         <form onSubmit={handleAuth} className="space-y-5">
           
-          {/* ✨ YENİ: ROL SEÇİM BUTONLARI (Sadece Kayıtta Gözükür) */}
+          {/* ROL SEÇİMİ */}
           {isSignUp && (
             <div className="grid grid-cols-2 gap-4 mb-2 animate-slideDown">
               <button
@@ -225,14 +211,12 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Mesaj */}
         {message.text && (
           <div className={`mt-5 p-4 rounded-xl border-2 text-center text-sm font-semibold animate-slideDown ${getMessageStyle()}`}>
             {message.text}
           </div>
         )}
 
-        {/* Mod Değiştirme */}
         <div className="mt-8 text-center">
           <p className="text-slate-400 text-sm mb-2">
             {isSignUp ? 'Zaten hesabın var mı?' : 'Henüz hesabın yok mu?'}
@@ -245,7 +229,6 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Bilgi Notu */}
         <div className="mt-6 p-4 bg-slate-700/30 rounded-xl border border-slate-600/50">
           <p className="text-slate-400 text-xs text-center">
             🔐 Verileriniz güvenli bir şekilde saklanır
@@ -255,21 +238,11 @@ export default function Login() {
 
       <style>{`
         @keyframes slideDown {
-          from {
-            transform: translateY(-10px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
+          from { transform: translateY(-10px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
-        .animate-slideDown {
-          animation: slideDown 0.3s ease-out;
-        }
-        .delay-1000 {
-          animation-delay: 1s;
-        }
+        .animate-slideDown { animation: slideDown 0.3s ease-out; }
+        .delay-1000 { animation-delay: 1s; }
       `}</style>
     </div>
   );

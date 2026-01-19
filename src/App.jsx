@@ -2,32 +2,32 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import Login from './Login';
 import StudentDashboard from './StudentDashboard';
-import TeacherDashboard from './TeacherDashboard'; // 👈 Dosya adının doğru olduğundan emin ol
+import TeacherDashboard from './TeacherDashboard';
 
 export default function App() {
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Hata ayıklama verileri (Ekranda göstermek için)
+  const [debugData, setDebugData] = useState({
+    metadata: null,
+    dbResult: null,
+    dbError: null
+  });
 
   useEffect(() => {
-    // 1. Mevcut oturumu al
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) {
-        // Oturum varsa rolü çekmeye git
-        checkUserRole(session.user.id);
-      } else {
-        // Oturum yoksa yüklemeyi bitir (Login ekranı açılacak)
-        setLoading(false);
-      }
+      if (session) fetchRole(session.user);
+      else setLoading(false);
     });
 
-    // 2. Oturum değişikliklerini (Giriş/Çıkış) dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        setLoading(true); // Giriş yapıldıysa tekrar yükleniyor moduna al
-        checkUserRole(session.user.id);
+        setLoading(true);
+        fetchRole(session.user);
       } else {
         setUserRole(null);
         setLoading(false);
@@ -37,71 +37,82 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function checkUserRole(userId) {
-    try {
-      console.log("Rol kontrol ediliyor..."); // Konsoldan takip etmek için
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error("Rol çekme hatası:", error);
-        // Hata varsa varsayılan olarak öğrenci yapmayalım, null kalsın
-      }
+  async function fetchRole(user) {
+    // 1. Metadata Kontrolü
+    const metaRole = user.user_metadata?.role;
+    
+    // 2. Veritabanı Kontrolü
+    const { data: dbData, error: dbError } = await supabase
+      .from('profiles')
+      .select('*') // Tüm satırı çekelim ki hata varsa görelim
+      .eq('id', user.id)
+      .single();
 
-      if (data) {
-        console.log("Bulunan Rol:", data.role);
-        setUserRole(data.role);
-      }
-    } catch (error) {
-      console.error('Beklenmedik hata:', error);
-    } finally {
-      setLoading(false); // Her halükarda yüklemeyi bitir
+    // Debug verilerini kaydet
+    setDebugData({
+      metadata: user.user_metadata,
+      dbResult: dbData,
+      dbError: dbError
+    });
+
+    // Karar Mekanizması
+    if (metaRole) {
+      setUserRole(metaRole);
+    } else if (dbData?.role) {
+      setUserRole(dbData.role);
     }
+    
+    setLoading(false);
   }
 
-  // --- EKRAN YÖNETİMİ ---
+  if (loading) return <div className="p-10 text-center">Yükleniyor...</div>;
+  if (!session) return <Login />;
 
-  // 1. Hala yükleniyorsa bekleme ekranı göster (Önemli olan burası!)
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-600 font-sans">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="font-bold text-lg animate-pulse">Sistem Yükleniyor...</p>
-      </div>
-    );
-  }
+  // EĞER ROL BULUNURSA NORMAL ÇALIŞIR
+  if (userRole === 'teacher') return <TeacherDashboard />;
+  if (userRole === 'student') return <StudentDashboard />;
 
-  // 2. Oturum yoksa Login ekranı
-  if (!session) {
-    return <Login />;
-  }
+  // 🔴 SORUN VARSA BU EKRAN ÇIKAR (Bana buradaki bilgileri lazım)
+  return (
+    <div className="min-h-screen p-8 bg-gray-100 font-mono text-sm">
+      <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-xl border-l-4 border-red-500">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">🕵️ Hata Tanı Ekranı</h2>
+        <p className="mb-4">Kullanıcı giriş yaptı ama rol bulunamadı. İşte detaylar:</p>
 
-  // 3. Oturum var ama Rol hala yoksa (Veritabanı hatası vs.)
-  if (!userRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-red-50 p-6 text-center">
-        <div>
-          <h2 className="text-2xl font-bold text-red-600 mb-2">⚠️ Yetki Hatası</h2>
-          <p className="text-slate-600 mb-4">Kullanıcı rolünüz belirlenemedi. Lütfen çıkış yapıp tekrar deneyin.</p>
-          <button 
-            onClick={() => supabase.auth.signOut()} 
-            className="bg-red-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-red-700"
-          >
-            Çıkış Yap
-          </button>
+        <div className="space-y-4">
+          <div className="bg-gray-50 p-4 rounded border">
+            <h3 className="font-bold text-blue-600">1. Kullanıcı ID</h3>
+            <p>{session.user.id}</p>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded border">
+            <h3 className="font-bold text-purple-600">2. Metadata İçeriği (Login.jsx'ten gelmeli)</h3>
+            <pre className="whitespace-pre-wrap text-xs mt-2">
+              {JSON.stringify(debugData.metadata, null, 2)}
+            </pre>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded border">
+            <h3 className="font-bold text-orange-600">3. Veritabanı Sorgusu (Profiles tablosu)</h3>
+            {debugData.dbError ? (
+              <div className="text-red-600">
+                <strong>HATA VAR:</strong> {JSON.stringify(debugData.dbError, null, 2)}
+              </div>
+            ) : (
+              <pre className="whitespace-pre-wrap text-xs mt-2">
+                {debugData.dbResult ? JSON.stringify(debugData.dbResult, null, 2) : "Tabloda bu ID ile kayıt bulunamadı (NULL)"}
+              </pre>
+            )}
+          </div>
         </div>
-      </div>
-    );
-  }
 
-  // 4. ROL KONTROLÜ (Doğru Yönlendirme)
-  if (userRole === 'teacher') {
-    return <TeacherDashboard />;
-  } else {
-    return <StudentDashboard />;
-  }
+        <button 
+          onClick={() => supabase.auth.signOut()} 
+          className="mt-6 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        >
+          Çıkış Yap ve Tekrar Dene
+        </button>
+      </div>
+    </div>
+  );
 }
