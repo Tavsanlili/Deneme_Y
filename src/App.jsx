@@ -19,7 +19,7 @@ export default function App() {
   const fetchRole = useCallback(async (user) => {
     // 1. Metadata Kontrolü
     const metaRole = user.user_metadata?.role;
-    
+
     // 2. Veritabanı Kontrolü
     const { data: dbData, error: dbError } = await supabase
       .from('profiles')
@@ -40,7 +40,7 @@ export default function App() {
     } else if (dbData?.role) {
       setUserRole(dbData.role);
     }
-    
+
     setLoading(false);
   }, []);
 

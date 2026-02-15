@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import AddExamModal from './AddExamModal';
 import NetChart from './NetChart';
@@ -92,7 +92,16 @@ export default function StudentDashboard() {
       console.error("Veri çekme hatası:", error);
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchUserAndData();
+  }, [fetchUserAndData]);
+
+  useEffect(() => {
+    fetchUserAndData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
@@ -101,7 +110,7 @@ export default function StudentDashboard() {
   /* eslint-enable react-hooks/exhaustive-deps */
 
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
-  function calculateDynamicStatistics(lessonsData, mistakesData, totalExams) {
+  const calculateDynamicStatistics = useCallback((lessonsData, mistakesData, totalExams) => {
     let total = 0; let red = 0, orange = 0, yellow = 0, green = 0;
     const topicWrongCounts = {};
     mistakesData.forEach(m => { topicWrongCounts[m.topic_id] = (topicWrongCounts[m.topic_id] || 0) + m.wrong_count; });
@@ -115,7 +124,7 @@ export default function StudentDashboard() {
       });
     });
     setStatistics({ total, red, orange, yellow, green });
-  }
+  }, []);
 
   function determineCategory(mistakeCount, totalExams) {
     if (totalExams === 0) return 'green';
@@ -131,7 +140,7 @@ export default function StudentDashboard() {
     return 'green';
   }
 
-  function calculateMistakeStats(mistakesData, totalExams) {
+  const calculateMistakeStats = useCallback((mistakesData, totalExams) => {
     const stats = {};
     mistakesData.forEach(mistake => {
       if (!mistake.topics || !mistake.exams) return;
@@ -146,7 +155,7 @@ export default function StudentDashboard() {
     Object.values(stats).forEach(item => { item.examCount = item.examDetails.length; });
     const filteredStats = Object.values(stats).filter(stat => determineCategory(stat.totalWrongs, totalExams) !== 'green');
     setMistakeStats(filteredStats.sort((a, b) => b.totalWrongs - a.totalWrongs));
-  }
+  }, []);
 
   const getMistakeDotColor = (mistakeCount, totalExams) => {
     const category = determineCategory(mistakeCount, totalExams);
