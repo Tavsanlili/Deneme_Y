@@ -44,7 +44,7 @@ export default function AddExamModal({ isOpen, onClose, onExamAdded }) {
       const newCount = currentCount + amount;
 
       if (newCount <= 0) {
-        const { [topicId]: deleted, ...rest } = prev;
+        const { [topicId]: _deleted, ...rest } = prev;
         return rest;
       }
       return { ...prev, [topicId]: newCount };
