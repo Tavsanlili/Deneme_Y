@@ -16,10 +16,10 @@ export default function App() {
     dbError: null
   });
 
-  async function fetchRole(user) {
+  const fetchRole = useCallback(async (user) => {
     // 1. Metadata Kontrolü
     const metaRole = user.user_metadata?.role;
-
+    
     // 2. Veritabanı Kontrolü
     const { data: dbData, error: dbError } = await supabase
       .from('profiles')
@@ -40,7 +40,7 @@ export default function App() {
     } else if (dbData?.role) {
       setUserRole(dbData.role);
     }
-
+    
     setLoading(false);
   }, []);
 
@@ -64,27 +64,6 @@ export default function App() {
 
     return () => subscription.unsubscribe();
   }, [fetchRole]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchRole(session.user);
-      else setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        setLoading(true);
-        fetchRole(session.user);
-      } else {
-        setUserRole(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   if (loading) return <div className="p-10 text-center">Yükleniyor...</div>;
   if (!session) return <Login />;
