@@ -86,6 +86,27 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchRole(session.user);
+      else setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        setLoading(true);
+        fetchRole(session.user);
+      } else {
+        setUserRole(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   if (loading) return <div className="p-10 text-center">Yükleniyor...</div>;
   if (!session) return <Login />;
 

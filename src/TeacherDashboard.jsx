@@ -143,7 +143,6 @@ export default function TeacherDashboard() {
   // Öğrenci Detayını Aç
   async function openStudentDetail(studentId) {
     setSelectedStudentId(studentId);
-    setDetailLoading(true);
     
     try {
       const { data: profileData, error: profileError } = await supabase
@@ -228,10 +227,8 @@ export default function TeacherDashboard() {
         mistakeStats
       });
       
-      setDetailLoading(false);
     } catch (error) {
       console.error("Veri çekme hatası:", error);
-      setDetailLoading(false);
     }
   }
 

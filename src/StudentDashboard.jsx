@@ -103,6 +103,11 @@ export default function StudentDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    fetchUserAndData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
   const calculateDynamicStatistics = useCallback((lessonsData, mistakesData, totalExams) => {
     let total = 0; let red = 0, orange = 0, yellow = 0, green = 0;
