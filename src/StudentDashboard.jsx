@@ -10,7 +10,7 @@ export default function StudentDashboard() {
   
   // Konu Detay Modalı
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
-  const [selectedTopic, _setSelectedTopic] = useState(null);
+  const [selectedTopic, _SET_SELECTED_TOPIC] = useState(null);
   const [examStats, setExamStats] = useState({ total: '', correct: '', wrong: '' });
   
   // Deneme Ekleme Modalı
@@ -97,6 +97,12 @@ export default function StudentDashboard() {
   useEffect(() => {
     fetchUserAndData();
   }, []);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    fetchUserAndData();
+  }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
   function calculateDynamicStatistics(lessonsData, mistakesData, totalExams) {
