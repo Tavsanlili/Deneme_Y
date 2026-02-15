@@ -28,7 +28,7 @@ export default function Login() {
         // --- KAYIT OLMA (DÜZELTİLDİ) ---
         
         // 1. Supabase Auth Kaydı + Metadata (Rol) Ekleme
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -64,7 +64,7 @@ export default function Login() {
 
       } else {
         // --- GİRİŞ YAPMA ---
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });

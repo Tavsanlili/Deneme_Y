@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import Login from './Login';
 import StudentDashboard from './StudentDashboard';
@@ -16,28 +16,7 @@ export default function App() {
     dbError: null
   });
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchRole(session.user);
-      else setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        setLoading(true);
-        fetchRole(session.user);
-      } else {
-        setUserRole(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function fetchRole(user) {
+  const fetchRole = useCallback(async (user) => {
     // 1. Metadata Kontrolü
     const metaRole = user.user_metadata?.role;
     
@@ -63,7 +42,28 @@ export default function App() {
     }
     
     setLoading(false);
-  }
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchRole(session.user);
+      else setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        setLoading(true);
+        fetchRole(session.user);
+      } else {
+        setUserRole(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [fetchRole]);
 
   if (loading) return <div className="p-10 text-center">Yükleniyor...</div>;
   if (!session) return <Login />;

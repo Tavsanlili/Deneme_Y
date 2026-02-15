@@ -4,16 +4,14 @@ import AddExamModal from './AddExamModal';
 import NetChart from './NetChart';
 
 export default function StudentDashboard() {
-  const [lessons, setLessons] = useState([]);
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   
   // Konu Detay Modalı
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [selectedTopic, _SET_SELECTED_TOPIC] = useState(null);
   const [examStats, setExamStats] = useState({ total: '', correct: '', wrong: '' });
-  const [saveMessage, setSaveMessage] = useState('');
   
   // Deneme Ekleme Modalı
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
@@ -38,10 +36,6 @@ export default function StudentDashboard() {
   // Bildirim Sayıları
   const unreadMessageCount = messages.filter(m => !m.is_read).length;
   const pendingHomeworkCount = homeworks.filter(h => h.status === 'pending').length;
-
-  useEffect(() => {
-    fetchUserAndData();
-  }, []);
 
   async function fetchUserAndData() {
     try {
@@ -84,7 +78,6 @@ export default function StudentDashboard() {
         .eq('student_id', user.id)
         .order('due_date', { ascending: true });
 
-      setLessons(lessonsData || []);
       setProgress(progressMap);
       setExams(examsData || []);
       setMessages(messagesData || []);
@@ -100,6 +93,12 @@ export default function StudentDashboard() {
       setLoading(false);
     }
   }
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    fetchUserAndData();
+  }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
   function calculateDynamicStatistics(lessonsData, mistakesData, totalExams) {
@@ -204,7 +203,6 @@ export default function StudentDashboard() {
   }
 
   // Modal Açma Fonksiyonları
-  function openTopicModal(topic) { setSelectedTopic(topic); setExamStats({ total: '', correct: '', wrong: '' }); setSaveMessage(''); setIsTopicModalOpen(true); }
   function openMistakeDetailModal(stat) { setSelectedMistakeDetail(stat); setIsMistakeDetailModalOpen(true); }
   
   async function handleSaveStats() { /* Eski kod aynen kalacak */ 
