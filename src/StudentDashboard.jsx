@@ -10,7 +10,7 @@ export default function StudentDashboard() {
   
   // Konu Detay Modalı
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
-  const [selectedTopic, _setSelectedTopic] = useState(null);
+  const [selectedTopic, SET_SELECTED_TOPIC] = useState(null);
   const [examStats, setExamStats] = useState({ total: '', correct: '', wrong: '' });
   
   // Deneme Ekleme Modalı
@@ -37,7 +37,7 @@ export default function StudentDashboard() {
   const unreadMessageCount = messages.filter(m => !m.is_read).length;
   const pendingHomeworkCount = homeworks.filter(h => h.status === 'pending').length;
 
-  async function fetchUserAndData() {
+  const fetchUserAndData = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -98,13 +98,8 @@ export default function StudentDashboard() {
     fetchUserAndData();
   }, [fetchUserAndData]);
 
-  useEffect(() => {
-    fetchUserAndData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
-  const calculateDynamicStatistics = useCallback((lessonsData, mistakesData, totalExams) => {
+  function calculateDynamicStatistics(lessonsData, mistakesData, totalExams) {
     let total = 0; let red = 0, orange = 0, yellow = 0, green = 0;
     const topicWrongCounts = {};
     mistakesData.forEach(m => { topicWrongCounts[m.topic_id] = (topicWrongCounts[m.topic_id] || 0) + m.wrong_count; });
@@ -118,7 +113,7 @@ export default function StudentDashboard() {
       });
     });
     setStatistics({ total, red, orange, yellow, green });
-  }, []);
+  }
 
   function determineCategory(mistakeCount, totalExams) {
     if (totalExams === 0) return 'green';
@@ -134,7 +129,7 @@ export default function StudentDashboard() {
     return 'green';
   }
 
-  const calculateMistakeStats = useCallback((mistakesData, totalExams) => {
+  function calculateMistakeStats(mistakesData, totalExams) {
     const stats = {};
     mistakesData.forEach(mistake => {
       if (!mistake.topics || !mistake.exams) return;
@@ -149,7 +144,7 @@ export default function StudentDashboard() {
     Object.values(stats).forEach(item => { item.examCount = item.examDetails.length; });
     const filteredStats = Object.values(stats).filter(stat => determineCategory(stat.totalWrongs, totalExams) !== 'green');
     setMistakeStats(filteredStats.sort((a, b) => b.totalWrongs - a.totalWrongs));
-  }, []);
+  }
 
   const getMistakeDotColor = (mistakeCount, totalExams) => {
     const category = determineCategory(mistakeCount, totalExams);

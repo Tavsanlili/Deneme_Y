@@ -325,10 +325,6 @@ export default function TeacherDashboard() {
     setStudentDetailData(null);
   }
 
-  if (selectedStudentId && detailLoading) {
-    return <div className="p-10 text-center text-blue-600 font-bold animate-pulse">Öğrenci detayı yükleniyor...</div>;
-  }
-
   // Eğer detay açıksa, detay sayfasını göster
   if (selectedStudentId && studentDetailData) {
     const studentDisplayName = studentDetailData.profile?.full_name || studentDetailData.profile?.email?.split('@')[0] || 'Öğrenci';
