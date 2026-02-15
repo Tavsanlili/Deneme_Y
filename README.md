@@ -59,9 +59,7 @@ Supabase Ayarları:
 
 Supabase üzerinde bir proje oluşturun.
 
-Ana dizinde .env dosyası oluşturun ve API anahtarlarınızı ekleyin:
-
-Kod snippet'i
+Ana dizinde `.env` dosyası oluşturun (`.env.example` dosyasını kopyalayabilirsiniz) ve API anahtarlarınızı ekleyin:
 
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key

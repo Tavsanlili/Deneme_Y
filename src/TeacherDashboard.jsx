@@ -8,6 +8,7 @@ export default function TeacherDashboard() {
   // Öğrenci Detay için state'ler
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [studentDetailData, setStudentDetailData] = useState(null);
+  const [, setDetailLoading] = useState(false);
 
   // Mesaj Modal State'leri
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
@@ -319,6 +320,10 @@ export default function TeacherDashboard() {
   function closeStudentDetail() {
     setSelectedStudentId(null);
     setStudentDetailData(null);
+  }
+
+  if (selectedStudentId && detailLoading) {
+    return <div className="p-10 text-center text-blue-600 font-bold animate-pulse">Öğrenci detayı yükleniyor...</div>;
   }
 
   // Eğer detay açıksa, detay sayfasını göster
