@@ -1,19 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import AddExamModal from './AddExamModal';
 import NetChart from './NetChart';
 
 export default function StudentDashboard() {
-  const [lessons, setLessons] = useState([]);
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   
   // Konu Detay Modalı
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [selectedTopic, SET_SELECTED_TOPIC] = useState(null);
   const [examStats, setExamStats] = useState({ total: '', correct: '', wrong: '' });
-  const [saveMessage, setSaveMessage] = useState('');
   
   // Deneme Ekleme Modalı
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
@@ -39,11 +37,7 @@ export default function StudentDashboard() {
   const unreadMessageCount = messages.filter(m => !m.is_read).length;
   const pendingHomeworkCount = homeworks.filter(h => h.status === 'pending').length;
 
-  useEffect(() => {
-    fetchUserAndData();
-  }, []);
-
-  async function fetchUserAndData() {
+  const fetchUserAndData = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -84,7 +78,6 @@ export default function StudentDashboard() {
         .eq('student_id', user.id)
         .order('due_date', { ascending: true });
 
-      setLessons(lessonsData || []);
       setProgress(progressMap);
       setExams(examsData || []);
       setMessages(messagesData || []);
@@ -99,7 +92,11 @@ export default function StudentDashboard() {
       console.error("Veri çekme hatası:", error);
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchUserAndData();
+  }, [fetchUserAndData]);
 
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
   function calculateDynamicStatistics(lessonsData, mistakesData, totalExams) {
@@ -204,7 +201,6 @@ export default function StudentDashboard() {
   }
 
   // Modal Açma Fonksiyonları
-  function openTopicModal(topic) { setSelectedTopic(topic); setExamStats({ total: '', correct: '', wrong: '' }); setSaveMessage(''); setIsTopicModalOpen(true); }
   function openMistakeDetailModal(stat) { setSelectedMistakeDetail(stat); setIsMistakeDetailModalOpen(true); }
   
   async function handleSaveStats() { /* Eski kod aynen kalacak */ 
