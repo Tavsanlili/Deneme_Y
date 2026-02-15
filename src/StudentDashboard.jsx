@@ -92,15 +92,10 @@ export default function StudentDashboard() {
       console.error("Veri çekme hatası:", error);
       setLoading(false);
     }
-  }, []);
+  }
 
   useEffect(() => {
     fetchUserAndData();
-  }, [fetchUserAndData]);
-
-  useEffect(() => {
-    fetchUserAndData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
