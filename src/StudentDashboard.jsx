@@ -96,7 +96,6 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     fetchUserAndData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
