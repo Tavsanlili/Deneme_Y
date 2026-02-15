@@ -92,7 +92,11 @@ export default function StudentDashboard() {
       console.error("Veri çekme hatası:", error);
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchUserAndData();
+  }, [fetchUserAndData]);
 
   useEffect(() => {
     fetchUserAndData();

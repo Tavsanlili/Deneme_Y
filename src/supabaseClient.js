@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 
-// ✅ Senin Proje URL'in
-const supabaseUrl = 'https://feypyxtohleemmapjjoo.supabase.co'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// ✅ Senin Anon Key'in (Herkese açık anahtar)
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZleXB5eHRvaGxlZW1tYXBqam9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMDYzMDgsImV4cCI6MjA4MzY4MjMwOH0._nCDa5nW43fU7mlMrzTMgWp-3RxaoMkS3UkLh07jetY'
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+}
 
-// ✅ Bağlantıyı oluşturup dışarıya açıyoruz
 export const supabase = createClient(supabaseUrl, supabaseKey)

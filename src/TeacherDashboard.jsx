@@ -8,7 +8,7 @@ export default function TeacherDashboard() {
   // Öğrenci Detay için state'ler
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [studentDetailData, setStudentDetailData] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [, setDetailLoading] = useState(false);
 
   // Mesaj Modal State'leri
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
