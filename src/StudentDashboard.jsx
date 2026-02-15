@@ -1,19 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import AddExamModal from './AddExamModal';
 import NetChart from './NetChart';
 
 export default function StudentDashboard() {
-  const [lessons, setLessons] = useState([]);
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   
   // Konu Detay Modalı
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [selectedTopic, _setSelectedTopic] = useState(null);
   const [examStats, setExamStats] = useState({ total: '', correct: '', wrong: '' });
-  const [saveMessage, setSaveMessage] = useState('');
   
   // Deneme Ekleme Modalı
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
@@ -38,10 +36,6 @@ export default function StudentDashboard() {
   // Bildirim Sayıları
   const unreadMessageCount = messages.filter(m => !m.is_read).length;
   const pendingHomeworkCount = homeworks.filter(h => h.status === 'pending').length;
-
-  useEffect(() => {
-    fetchUserAndData();
-  }, []);
 
   async function fetchUserAndData() {
     try {
@@ -84,7 +78,6 @@ export default function StudentDashboard() {
         .eq('student_id', user.id)
         .order('due_date', { ascending: true });
 
-      setLessons(lessonsData || []);
       setProgress(progressMap);
       setExams(examsData || []);
       setMessages(messagesData || []);
@@ -101,8 +94,13 @@ export default function StudentDashboard() {
     }
   }
 
+  useEffect(() => {
+    fetchUserAndData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ... (calculateDynamicStatistics, determineCategory, calculateMistakeStats, getMistakeDotColor fonksiyonları AYNI KALACAK) ...
-  function calculateDynamicStatistics(lessonsData, mistakesData, totalExams) {
+  const calculateDynamicStatistics = useCallback((lessonsData, mistakesData, totalExams) => {
     let total = 0; let red = 0, orange = 0, yellow = 0, green = 0;
     const topicWrongCounts = {};
     mistakesData.forEach(m => { topicWrongCounts[m.topic_id] = (topicWrongCounts[m.topic_id] || 0) + m.wrong_count; });
@@ -116,7 +114,7 @@ export default function StudentDashboard() {
       });
     });
     setStatistics({ total, red, orange, yellow, green });
-  }
+  }, []);
 
   function determineCategory(mistakeCount, totalExams) {
     if (totalExams === 0) return 'green';
@@ -132,7 +130,7 @@ export default function StudentDashboard() {
     return 'green';
   }
 
-  function calculateMistakeStats(mistakesData, totalExams) {
+  const calculateMistakeStats = useCallback((mistakesData, totalExams) => {
     const stats = {};
     mistakesData.forEach(mistake => {
       if (!mistake.topics || !mistake.exams) return;
@@ -147,7 +145,7 @@ export default function StudentDashboard() {
     Object.values(stats).forEach(item => { item.examCount = item.examDetails.length; });
     const filteredStats = Object.values(stats).filter(stat => determineCategory(stat.totalWrongs, totalExams) !== 'green');
     setMistakeStats(filteredStats.sort((a, b) => b.totalWrongs - a.totalWrongs));
-  }
+  }, []);
 
   const getMistakeDotColor = (mistakeCount, totalExams) => {
     const category = determineCategory(mistakeCount, totalExams);
@@ -204,7 +202,6 @@ export default function StudentDashboard() {
   }
 
   // Modal Açma Fonksiyonları
-  function openTopicModal(topic) { setSelectedTopic(topic); setExamStats({ total: '', correct: '', wrong: '' }); setSaveMessage(''); setIsTopicModalOpen(true); }
   function openMistakeDetailModal(stat) { setSelectedMistakeDetail(stat); setIsMistakeDetailModalOpen(true); }
   
   async function handleSaveStats() { /* Eski kod aynen kalacak */ 
